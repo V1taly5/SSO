@@ -1,6 +1,7 @@
 package main
 
 import (
+	"grpc-service/internal/app"
 	"grpc-service/internal/config"
 	"grpc-service/internal/config/lib/logger/handlers/slogpretty"
 	"log/slog"
@@ -25,6 +26,8 @@ func main() {
 		slog.Int("port", cfg.GRPC.Port))
 
 	// TODO: инициализировать приложение (app)
+	application := app.New(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
+	application.GRPCServer.MustRun()
 
 	// TODO: запустить gRPC-сервер приложения
 }
