@@ -58,28 +58,45 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 }
 
 func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ssov1.IsAdminResponse, error) {
-	panic("implement me")
+	if err := validateIsAdmin(req); err != nil {
+		return nil, err
+	}
+	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
+	if err != nil {
+		// TODO: ...
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+	return &ssov1.IsAdminResponse{
+		IsAdmin: isAdmin,
+	}, nil
 }
 
 func validateLogin(req *ssov1.LoginRequest) error {
-	if req.Email == "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
-	if req.Password == "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
-	if req.AppId == emptyValue {
+	if req.GetAppId() == emptyValue {
 		return status.Error(codes.InvalidArgument, "app_id is required")
 	}
 	return nil
 }
 
 func validateRegister(req *ssov1.RegisterRequest) error {
-	if req.Email == "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
-	if req.Password == "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
+	}
+	return nil
+}
+
+func validateIsAdmin(req *ssov1.IsAdminRequest) error {
+	if req.GetUserId() == emptyValue {
+		return status.Error(codes.InvalidArgument, "user_id is required")
 	}
 	return nil
 }
