@@ -43,6 +43,24 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 	}, nil
 }
 
+func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*ssov1.RegisterResponse, error) {
+	if err := validateRegister(req); err != nil {
+		return nil, err
+	}
+	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
+	if err != nil {
+		// TODO: ...
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+	return &ssov1.RegisterResponse{
+		UserId: userID,
+	}, nil
+}
+
+func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ssov1.IsAdminResponse, error) {
+	panic("implement me")
+}
+
 func validateLogin(req *ssov1.LoginRequest) error {
 	if req.Email == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
@@ -56,10 +74,12 @@ func validateLogin(req *ssov1.LoginRequest) error {
 	return nil
 }
 
-func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*ssov1.RegisterResponse, error) {
-	panic("implement me")
-}
-
-func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ssov1.IsAdminResponse, error) {
-	panic("implement me")
+func validateRegister(req *ssov1.RegisterRequest) error {
+	if req.Email == "" {
+		return status.Error(codes.InvalidArgument, "email is required")
+	}
+	if req.Password == "" {
+		return status.Error(codes.InvalidArgument, "password is required")
+	}
+	return nil
 }
