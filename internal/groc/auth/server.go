@@ -29,16 +29,9 @@ func Register(gRPC *grpc.Server, auth Auth) {
 }
 
 func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.LoginResponse, error) {
-	if req.Email == "" {
-		return nil, status.Error(codes.InvalidArgument, "email is required")
+	if err := validateLogin(req); err != nil {
+		return nil, err
 	}
-	if req.Password == "" {
-		return nil, status.Error(codes.InvalidArgument, "password is required")
-	}
-	if req.AppId == emptyValue {
-		return nil, status.Error(codes.InvalidArgument, "app_id is required")
-	}
-
 	// TODO: implement login via auth service
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.GetAppId()))
 	if err != nil {
@@ -48,6 +41,19 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 	return &ssov1.LoginResponse{
 		Token: token,
 	}, nil
+}
+
+func validateLogin(req *ssov1.LoginRequest) error {
+	if req.Email == "" {
+		return status.Error(codes.InvalidArgument, "email is required")
+	}
+	if req.Password == "" {
+		return status.Error(codes.InvalidArgument, "password is required")
+	}
+	if req.AppId == emptyValue {
+		return status.Error(codes.InvalidArgument, "app_id is required")
+	}
+	return nil
 }
 
 func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*ssov1.RegisterResponse, error) {
