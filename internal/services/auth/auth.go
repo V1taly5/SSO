@@ -2,9 +2,13 @@ package auth
 
 import (
 	"context"
+	"fmt"
+	"grpc-service/internal/config/lib/logger/sl"
 	"grpc-service/internal/domain/models"
 	"log/slog"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
@@ -39,6 +43,44 @@ func New(log *slog.Logger, userSaver UserSaver, userProvider UserProvider, appPr
 	}
 }
 
+// Login checks if user with given credentials exists in the system and returns access token.
+//
+// If user exists, but password is incorrect, returns error.
+// If user doesn't exist, returns error.
 func (a *Auth) Login(ctx context.Context, email string, password string, appID int) (string, error) {
+	panic("not implemented")
+}
+
+// RegisterNewUser registers new user in the system and returns user ID.
+// If user with given username already exists, returns error.
+func (a *Auth) RegisterNewUser(ctx context.Context, email string, password string) (userID int64, err error) {
+	const op = "auth.RegisterNewUser"
+
+	log := a.log.With(
+		slog.String("op", op),
+		slog.String("email", email),
+	)
+
+	log.Info("registering user")
+
+	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Error("failed to generate password hash", sl.Err(err))
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	id, err := a.usrSaver.SaveUser(ctx, email, passHash)
+	if err != nil {
+		log.Error("failed to save user", sl.Err(err))
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("user registered")
+
+	return id, nil
+}
+
+// IsAdmin checks if user is admin.
+func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	panic("not implemented")
 }
