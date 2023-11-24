@@ -1,8 +1,13 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"grpc-service/internal/storage"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
@@ -18,4 +23,27 @@ func New(storagePath string) (*Storage, error) {
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 	return &Storage{db: db}, nil
+}
+
+// SaveUser saves user to db.
+func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
+	const op = "storage.sqlite.SaveUser"
+
+	stmt, err := s.db.Prepare("INSERT INTO user(email, pass_hash) VALUES(?, ?)")
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	res, err := stmt.ExecContext(ctx, email, passHash)
+	if err != nil {
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExist)
+		}
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	return id, nil
 }
