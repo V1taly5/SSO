@@ -3,7 +3,7 @@ package main
 import (
 	"grpc-service/internal/app"
 	"grpc-service/internal/config"
-	"grpc-service/internal/config/lib/logger/handlers/slogpretty"
+	"grpc-service/internal/lib/logger/handlers/slogpretty"
 	"log/slog"
 	"os"
 	"os/signal"
